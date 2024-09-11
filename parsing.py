@@ -4,7 +4,7 @@ import cv2
 from PIL import Image 
 from torch.utils import data 
 import os 
-from transforms import get_affine_transform, transform_logits
+from .transforms import get_affine_transform, transform_logits
 
 
 def get_palette(num_cls):

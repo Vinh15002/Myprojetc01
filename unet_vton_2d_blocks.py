@@ -6,7 +6,7 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from transformer_vton_2d import Transformer2DModel
+from .transformer_vton_2d import Transformer2DModel
 
 from diffusers.utils import is_torch_version, logging
 from diffusers.utils.torch_utils import apply_freeu
