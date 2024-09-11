@@ -137,36 +137,35 @@ class SimpleFolderDataset(data.Dataset):
             w = h * self.aspect_ratio
         scale = np.array([w, h], dtype=np.float32)
         return center, scale
+    def __getitem__(self, index):
+        if self.is_pil_image:
+            img = np.asarray(self.file_list[index])[:, :, [2, 1, 0]]
+        else:
+            img_name = self.file_list[index]
+            img_path = os.path.join(self.root, img_name)
+            img = cv2.imread(img_path, cv2.IMREAD_COLOR)
+        h, w, _ = img.shape
 
-def __getitem__(self, index):
-    if self.is_pil_image:
-        img = np.asarray(self.file_list[index])[:, :, [2, 1, 0]]
-    else:
-        img_name = self.file_list[index]
-        img_path = os.path.join(self.root, img_name)
-        img = cv2.imread(img_path, cv2.IMREAD_COLOR)
-    h, w, _ = img.shape
+        # Get person center and scale
+        person_center, s = self._box2cs([0, 0, w - 1, h - 1])
+        r = 0
+        trans = get_affine_transform(person_center, s, r, self.input_size)
+        input = cv2.warpAffine(
+            img,
+            trans,
+            (int(self.input_size[1]), int(self.input_size[0])),
+            flags=cv2.INTER_LINEAR,
+            borderMode=cv2.BORDER_CONSTANT,
+            borderValue=(0, 0, 0))
 
-    # Get person center and scale
-    person_center, s = self._box2cs([0, 0, w - 1, h - 1])
-    r = 0
-    trans = get_affine_transform(person_center, s, r, self.input_size)
-    input = cv2.warpAffine(
-        img,
-        trans,
-        (int(self.input_size[1]), int(self.input_size[0])),
-        flags=cv2.INTER_LINEAR,
-        borderMode=cv2.BORDER_CONSTANT,
-        borderValue=(0, 0, 0))
+        input = self.transform(input)
+        meta = {
+            'center': person_center,
+            'height': h,
+            'width': w,
+            'scale': s,
+            'rotation': r
+        }
 
-    input = self.transform(input)
-    meta = {
-        'center': person_center,
-        'height': h,
-        'width': w,
-        'scale': s,
-        'rotation': r
-    }
-
-    return input, meta
+        return input, meta
 
